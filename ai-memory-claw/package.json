@@ -1,0 +1,30 @@
+{
+  "name": "ai-memory-claw",
+  "version": "1.0.0",
+  "description": "AI渐进式记忆系统 OpenClaw 插件 - 无感运行版",
+  "main": "index.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest",
+    "dev": "tsc --watch"
+  },
+  "keywords": [
+    "ai-memory",
+    "openclaw",
+    "memory-system",
+    "ai-memory"
+  ],
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "chroma-js": "^2.4.2",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/uuid": "^9.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
+  }
+}
