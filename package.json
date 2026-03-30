@@ -1,6 +1,6 @@
 {
   "name": "ai-memory-claw",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "AI渐进式记忆系统 OpenClaw 插件 - 无感运行版",
   "main": "index.ts",
   "type": "module",
