@@ -1,49 +1,10 @@
 {
   "id": "ai-memory-claw",
   "name": "AI Memory Claw",
-  "description": "AI渐进式记忆系统 - 无感运行版",
+  "description": "AI渐进式记忆系统 - 无感运行版 - 支持多Agent记忆隔离",
   "configSchema": {
     "type": "object",
     "additionalProperties": false,
-    "properties": {}
-  },
-  "uiHints": {
-    "dataDir": {
-      "label": "数据存储目录",
-      "placeholder": "~/.ai-memory-claw/data",
-      "help": "记忆数据存储的目录路径"
-    },
-    "autoRecall": {
-      "label": "自动召回",
-      "help": "对话前自动搜索并注入相关记忆"
-    },
-    "autoCapture": {
-      "label": "自动捕获",
-      "help": "对话后自动生成记忆"
-    },
-    "captureStrategy": {
-      "label": "捕获策略",
-      "help": "always=每次都存, selective=关键词匹配才存"
-    },
-    "recallThreshold": {
-      "label": "召回阈值",
-      "help": "相似度阈值，0-1之间，越高越严格"
-    },
-    "recallLimit": {
-      "label": "召回数量",
-      "help": "每次召回的记忆数量上限"
-    },
-    "enableForget": {
-      "label": "启用遗忘",
-      "help": "自动删除低价值记忆"
-    },
-    "enableIntegration": {
-      "label": "启用整合",
-      "help": "自动合并相似记忆"
-    }
-  },
-  "configSchema": {
-    "type": "object",
     "properties": {
       "dataDir": {
         "type": "string",
@@ -103,7 +64,76 @@
         "default": 0.8,
         "minimum": 0.5,
         "maximum": 1
+      },
+      "agentName": {
+        "type": "string",
+        "default": "default",
+        "description": "Agent名称，用于多Agent记忆隔离"
+      },
+      "sharedEnabled": {
+        "type": "boolean",
+        "default": true,
+        "description": "是否启用共享记忆功能"
+      },
+      "sharedDir": {
+        "type": "string",
+        "default": "~/.ai-memory-claw/shared",
+        "description": "共享记忆存储目录"
+      },
+      "fallbackToDefault": {
+        "type": "boolean",
+        "default": true,
+        "description": "当agent目录不存在时是否回退到默认目录"
       }
+    }
+  },
+  "uiHints": {
+    "dataDir": {
+      "label": "数据存储目录",
+      "placeholder": "~/.ai-memory-claw/data",
+      "help": "记忆数据存储的目录路径"
+    },
+    "autoRecall": {
+      "label": "自动召回",
+      "help": "对话前自动搜索并注入相关记忆"
+    },
+    "autoCapture": {
+      "label": "自动捕获",
+      "help": "对话后自动生成记忆"
+    },
+    "captureStrategy": {
+      "label": "捕获策略",
+      "help": "always=每次都存, selective=关键词匹配才存"
+    },
+    "recallThreshold": {
+      "label": "召回阈值",
+      "help": "相似度阈值，0-1之间，越高越严格"
+    },
+    "recallLimit": {
+      "label": "召回数量",
+      "help": "每次召回的记忆数量上限"
+    },
+    "enableForget": {
+      "label": "启用遗忘",
+      "help": "自动删除低价值记忆"
+    },
+    "enableIntegration": {
+      "label": "启用整合",
+      "help": "自动合并相似记忆"
+    },
+    "agentName": {
+      "label": "Agent名称",
+      "placeholder": "default",
+      "help": "多Agent模式下的Agent标识符，每个Agent有独立的记忆目录"
+    },
+    "sharedEnabled": {
+      "label": "启用共享记忆",
+      "help": "允许记忆在多个Agent之间共享"
+    },
+    "sharedDir": {
+      "label": "共享记忆目录",
+      "placeholder": "~/.ai-memory-claw/shared",
+      "help": "共享记忆的存储目录"
     }
   }
 }

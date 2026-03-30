@@ -6,7 +6,7 @@
  */
 
 import { MemorySystem } from './memory-system';
-import { type MemoryConfig } from './config';
+import { type MemoryConfig, containsSharedKeyword } from './config';
 import { TriggerAnalyzer } from './triggers';
 import { CategoryAnalyzer } from './category';
 
@@ -53,16 +53,30 @@ export class AutoCapture {
       // 5. 提取标签
       const tags = this.triggerAnalyzer.extractTags(summary.task);
       
-      // 6. 强制存储 (100% 执行)
-      await this.memorySystem.store({
-        content: summary,
-        category,
-        subCategory,
-        importance,
-        tags
-      });
+      // 6. Multi-agent: 检查是否应该存储为共享记忆
+      const allText = this.extractAllText(event.messages);
+      const isShared = this.config.sharedEnabled && containsSharedKeyword(allText);
       
-      console.log(`[AutoCapture] 已存储记忆: ${category}/${subCategory} [${importance}]`);
+      // 7. 存储记忆
+      if (isShared) {
+        await this.memorySystem.storeShared({
+          content: summary,
+          category,
+          subCategory,
+          importance,
+          tags
+        });
+        console.log(`[AutoCapture] 已存储共享记忆: ${category}/${subCategory} [${importance}]`);
+      } else {
+        await this.memorySystem.store({
+          content: summary,
+          category,
+          subCategory,
+          importance,
+          tags
+        });
+        console.log(`[AutoCapture] 已存储私有记忆: ${category}/${subCategory} [${importance}]`);
+      }
       
     } catch (error) {
       console.error('[AutoCapture] 执行失败:', error);

@@ -29,17 +29,32 @@ export class AutoRecall {
         return;
       }
       
-      // 2. 搜索相关记忆
-      const memories = await this.memorySystem.search(prompt, {
+      const searchOptions = {
         limit: this.config.recallLimit,
         threshold: this.config.recallThreshold
-      });
+      };
+      
+      // 2. 搜索相关记忆
+      let memories = await this.memorySystem.search(prompt, searchOptions);
+      
+      // 3. 如果启用共享记忆，同时搜索共享记忆
+      if (this.config.sharedEnabled) {
+        const sharedMemories = await this.memorySystem.searchShared(prompt, searchOptions);
+        
+        // 合并结果，去重
+        const existingIds = new Set(memories.map(m => m.id));
+        for (const m of sharedMemories) {
+          if (!existingIds.has(m.id)) {
+            memories.push(m);
+          }
+        }
+      }
       
       if (memories.length === 0) {
         return;
       }
       
-      // 3. 格式化并返回
+      // 4. 格式化并返回
       const context = this.formatMemories(memories);
       
       return {
