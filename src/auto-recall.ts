@@ -8,7 +8,7 @@
  */
 
 import { MemorySystem } from './memory-system';
-import { type MemoryConfig } from './config';
+import { type MemoryConfig, containsSharedKeyword } from './config';
 import type { Memory } from './types';
 
 export class AutoRecall {
@@ -38,32 +38,74 @@ export class AutoRecall {
       // 3. 检查是否包含触发关键词
       const hasKeyword = this.hasTriggerKeyword(prompt);
       
+      // 4. 检查是否包含共享关键词（用于搜索共享记忆）
+      const hasSharedKeyword = containsSharedKeyword(prompt);
+      
       let memories: Memory[] = [];
+      let privateMemories: Memory[] = [];
+      let sharedMemories: Memory[] = [];
+      
+      const searchOptions = {
+        limit: this.config.manualRecallLimit,
+        threshold: this.config.recallThreshold
+      };
       
       if (hasKeyword) {
         // 手动触发模式：有关键词
         console.log('[AutoRecall] 检测到触发关键词，搜索相关记忆...');
-        memories = await this.memorySystem.search(prompt, {
-          limit: this.config.manualRecallLimit,
-          threshold: this.config.recallThreshold
-        });
-        console.log(`[AutoRecall] 手动触发召回 ${memories.length} 条`);
+        
+        // 如果包含共享关键词，同时搜索私有和共享记忆
+        if (hasSharedKeyword || this.config.sharedEnabled) {
+          console.log('[AutoRecall] 检测到共享关键词，同时搜索私有和共享记忆...');
+          [privateMemories, sharedMemories] = await Promise.all([
+            this.memorySystem.searchPrivate(prompt, searchOptions),
+            this.memorySystem.searchShared(prompt, searchOptions)
+          ]);
+          memories = [...privateMemories, ...sharedMemories];
+        } else {
+          memories = await this.memorySystem.search(prompt, searchOptions);
+        }
+        console.log(`[AutoRecall] 手动触发召回 ${memories.length} 条 (私有: ${privateMemories.length}, 共享: ${sharedMemories.length})`);
         
       } else if (isFirstMessage && this.config.autoRecallInNewSession) {
         // 新会话自动触发
         console.log('[AutoRecall] 新会话，自动搜索相关记忆...');
-        memories = await this.memorySystem.search(prompt, {
+        
+        // 新会话时也搜索共享记忆
+        const newSessionOptions = {
           limit: this.config.newSessionMemoryLimit,
           threshold: this.config.recallThreshold
-        });
-        console.log(`[AutoRecall] 新会话召回 ${memories.length} 条`);
+        };
+        
+        if (this.config.sharedEnabled) {
+          [privateMemories, sharedMemories] = await Promise.all([
+            this.memorySystem.searchPrivate(prompt, newSessionOptions),
+            this.memorySystem.searchShared(prompt, newSessionOptions)
+          ]);
+          memories = [...privateMemories, ...sharedMemories];
+        } else {
+          memories = await this.memorySystem.search(prompt, newSessionOptions);
+        }
+        console.log(`[AutoRecall] 新会话召回 ${memories.length} 条 (私有: ${privateMemories.length}, 共享: ${sharedMemories.length})`);
+        
       } else {
         // 非新会话但仍尝试召回（使用较低阈值）
         console.log('[AutoRecall] 尝试召回相关记忆...');
-        memories = await this.memorySystem.search(prompt, {
+        
+        const lowThresholdOptions = {
           limit: 1,
-          threshold: 0.3  // 较低阈值，扩大召回范围
-        });
+          threshold: 0.3
+        };
+        
+        if (this.config.sharedEnabled) {
+          [privateMemories, sharedMemories] = await Promise.all([
+            this.memorySystem.searchPrivate(prompt, lowThresholdOptions),
+            this.memorySystem.searchShared(prompt, lowThresholdOptions)
+          ]);
+          memories = [...privateMemories, ...sharedMemories];
+        } else {
+          memories = await this.memorySystem.search(prompt, lowThresholdOptions);
+        }
         console.log(`[AutoRecall] 召回 ${memories.length} 条`);
       }
       
@@ -71,8 +113,8 @@ export class AutoRecall {
         return;
       }
       
-      // 4. 格式化并返回
-      const context = this.formatMemories(memories);
+      // 5. 格式化并返回（区分私有和共享）
+      const context = this.formatMemories(memories, privateMemories.length, sharedMemories.length);
       return { prependContext: context };
       
     } catch (error) {
@@ -149,18 +191,28 @@ export class AutoRecall {
   /**
    * 格式化记忆为上下文字符串
    */
-  private formatMemories(memories: Memory[]): string {
+  private formatMemories(memories: Memory[], privateCount: number = 0, sharedCount: number = 0): string {
     const lines = memories.map((m, i) => {
       const date = new Date(m.createdAt).toLocaleDateString('zh-CN');
       const importance = this.getImportanceEmoji(m.importance);
+      const sharedLabel = m.shared ? ' [共享]' : '';
       
-      return `${i + 1}. ${importance} [${date}] ${m.category}/${m.subCategory}
+      return `${i + 1}. ${importance} [${date}] ${m.category}/${m.subCategory}${sharedLabel}
   任务: ${m.content.task}
   结果: ${m.content.result}`;
     });
     
+    // 构建头部说明
+    let header = '以下是你之前与用户交流的相关记忆，供参考：';
+    if (privateCount > 0 || sharedCount > 0) {
+      const parts = [];
+      if (privateCount > 0) parts.push(`私有记忆 ${privateCount} 条`);
+      if (sharedCount > 0) parts.push(`共享记忆 ${sharedCount} 条`);
+      header = `以下是你之前与用户交流的相关记忆（${parts.join('，')}），供参考：`;
+    }
+    
     return `<relevant-memories>
-以下是你之前与用户交流的相关记忆，供参考：
+${header}
 ${lines.join('\n\n')}
 </relevant-memories>`;
   }

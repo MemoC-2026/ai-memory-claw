@@ -1,12 +1,12 @@
 {
   "id": "ai-memory-claw",
   "name": "AI Memory Claw",
-  "description": "AI渐进式记忆系统 - 无感运行版",
+  "description": "AI渐进式记忆系统 - 无感运行版 (多Agent支持)",
   "uiHints": {
     "dataDir": {
       "label": "数据存储目录",
       "placeholder": "~/.ai-memory-claw/data",
-      "help": "记忆数据存储的目录路径"
+      "help": "记忆数据存储的目录路径，支持 {agentName} 变量"
     },
     "autoRecall": {
       "label": "自动召回",
@@ -51,6 +51,24 @@
     "enableIntegration": {
       "label": "启用整合",
       "help": "自动合并相似记忆"
+    },
+    "agentName": {
+      "label": "Agent名称",
+      "placeholder": "default",
+      "help": "Agent标识符，用于记忆隔离。不同Agent使用不同目录存储记忆"
+    },
+    "sharedEnabled": {
+      "label": "启用共享记忆",
+      "help": "是否启用跨Agent共享记忆功能"
+    },
+    "sharedDir": {
+      "label": "共享记忆目录",
+      "placeholder": "~/.ai-memory-claw/shared",
+      "help": "共享记忆存储目录，所有Agent都能访问"
+    },
+    "fallbackToDefault": {
+      "label": "回退到默认目录",
+      "help": "当Agent目录不存在时，回退到默认data目录（兼容旧版本）"
     }
   },
   "configSchema": {
@@ -139,6 +157,22 @@
         "default": 0.8,
         "minimum": 0.5,
         "maximum": 1
+      },
+      "agentName": {
+        "type": "string",
+        "default": "default"
+      },
+      "sharedEnabled": {
+        "type": "boolean",
+        "default": true
+      },
+      "sharedDir": {
+        "type": "string",
+        "default": "~/.ai-memory-claw/shared"
+      },
+      "fallbackToDefault": {
+        "type": "boolean",
+        "default": true
       }
     }
   }

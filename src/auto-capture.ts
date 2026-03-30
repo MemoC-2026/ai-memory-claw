@@ -6,7 +6,7 @@
  */
 
 import { MemorySystem } from './memory-system';
-import { type MemoryConfig } from './config';
+import { type MemoryConfig, containsSharedKeyword } from './config';
 import { TriggerAnalyzer } from './triggers';
 import { CategoryAnalyzer } from './category';
 
@@ -44,25 +44,40 @@ export class AutoCapture {
         return;
       }
       
-      // 3. 分析分类
+      // 3. 检查是否包含共享关键词
+      const allText = this.extractAllText(event.messages);
+      const isSharedMemory = containsSharedKeyword(allText);
+      
+      // 4. 分析分类
       const { category, subCategory } = this.categoryAnalyzer.analyze(summary.task);
       
-      // 4. 判断重要性
+      // 5. 判断重要性
       const importance = this.triggerAnalyzer.analyze(summary.task);
       
-      // 5. 提取标签
+      // 6. 提取标签
       const tags = this.triggerAnalyzer.extractTags(summary.task);
       
-      // 6. 强制存储 (100% 执行)
-      await this.memorySystem.store({
-        content: summary,
-        category,
-        subCategory,
-        importance,
-        tags
-      });
-      
-      console.log(`[AutoCapture] 已存储记忆: ${category}/${subCategory} [${importance}]`);
+      // 7. 根据是否为共享记忆选择存储方法
+      if (isSharedMemory && this.config.sharedEnabled) {
+        await this.memorySystem.storeShared({
+          content: summary,
+          category,
+          subCategory,
+          importance,
+          tags
+        });
+        console.log(`[AutoCapture] 已存储共享记忆: ${category}/${subCategory} [${importance}]`);
+      } else {
+        // 强制存储 (100% 执行)
+        await this.memorySystem.store({
+          content: summary,
+          category,
+          subCategory,
+          importance,
+          tags
+        });
+        console.log(`[AutoCapture] 已存储私有记忆: ${category}/${subCategory} [${importance}]`);
+      }
       
     } catch (error) {
       console.error('[AutoCapture] 执行失败:', error);

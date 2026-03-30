@@ -51,6 +51,8 @@ export interface Memory {
   summary?: string;
   originalSize?: number;
   compressedSize?: number;
+  // 多Agent支持
+  shared?: boolean;
 }
 
 // 记忆簇
@@ -78,6 +80,8 @@ export interface MemoryCategory {
 // 记忆统计
 export interface MemoryStats {
   total: number;
+  private?: number;
+  shared?: number;
   byCategory: Record<string, number>;
   byImportance: Record<string, number>;
   averageUsage: number;
