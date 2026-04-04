@@ -69,6 +69,68 @@ export class Forgrtter {
     
     return results;
   }
+
+  /**
+   * 检查并自动升级高价值记忆的优先级
+   */
+  async checkAndUpgradePriority(): Promise<{ memoryId: string; from: string; to: string }[]> {
+    const results: { memoryId: string; from: string; to: string }[] = [];
+    const memories = this.memorySystem.getAllMemories();
+    const now = Date.now();
+    
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    const upgradeThresholds = {
+      // 升级条件：usageCount 或 访问频率
+      low: { usageCount: 5, recentAccessDays: 7 },      // low -> medium
+      medium: { usageCount: 10, recentAccessDays: 14 }, // medium -> high
+      high: { usageCount: 20, recentAccessDays: 21 }    // high -> critical
+    };
+    
+    const levels: ('low' | 'medium' | 'high' | 'critical')[] = 
+      ['low', 'medium', 'high', 'critical'];
+    
+    for (const memory of memories) {
+      // critical 已经是最高，不再升级
+      if (memory.importance === 'critical') continue;
+      
+      const idx = levels.indexOf(memory.importance);
+      if (idx >= levels.length - 1) continue;
+      
+      const threshold = upgradeThresholds[memory.importance];
+      const lastAccess = new Date(memory.lastAccessedAt).getTime();
+      const daysSinceAccess = (now - lastAccess) / DAY_MS;
+      
+      // 检查是否满足升级条件
+      let shouldUpgrade = false;
+      
+      if (memory.usageCount >= threshold.usageCount) {
+        shouldUpgrade = true;
+      } else if (memory.usageCount >= threshold.usageCount / 2 && 
+                 daysSinceAccess < threshold.recentAccessDays) {
+        // 如果使用次数达到一半，且最近有访问，也可以升级
+        shouldUpgrade = true;
+      }
+      
+      if (shouldUpgrade) {
+        const oldImportance = memory.importance;
+        memory.importance = levels[idx + 1];
+        
+        results.push({
+          memoryId: memory.id,
+          from: oldImportance,
+          to: memory.importance
+        });
+        
+        console.log(`[Forgrtter] 记忆 ${memory.id} 优先级已升级: ${oldImportance} -> ${memory.importance}`);
+      }
+    }
+    
+    if (results.length > 0) {
+      console.log(`[Forgrtter] 已升级 ${results.length} 条记忆的优先级`);
+    }
+    
+    return results;
+  }
   
   /**
    * 获取重要性分数

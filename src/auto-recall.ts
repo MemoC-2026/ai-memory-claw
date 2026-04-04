@@ -205,7 +205,7 @@ export class AutoRecall {
     // 构建头部说明
     let header = '以下是你之前与用户交流的相关记忆，供参考：';
     if (privateCount > 0 || sharedCount > 0) {
-      const parts = [];
+      const parts: string[] = [];
       if (privateCount > 0) parts.push(`私有记忆 ${privateCount} 条`);
       if (sharedCount > 0) parts.push(`共享记忆 ${sharedCount} 条`);
       header = `以下是你之前与用户交流的相关记忆（${parts.join('，')}），供参考：`;

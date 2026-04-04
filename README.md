@@ -1,15 +1,28 @@
 # AI Memory Claw
 
-OpenClaw 插件 - AI 渐进式记忆系统（无感运行版）
+OpenClaw 插件 - AI 渐进式记忆系统
 
 ## 功能特性
 
+### 核心功能
 - **自动召回**：对话前自动搜索并注入相关记忆
-- **自动捕获**：对话后自动生成记忆（100%强制存储）
-- **遗忘机制**：自动删除低价值记忆
+- **自动捕获**：对话后自动生成记忆
+- **遗忘机制**：自动删除低价值记忆，释放存储空间
 - **整合机制**：自动合并相似记忆
 - **向量搜索**：基于语义相似度的记忆检索
-- **分类分析**：自动识别记忆类别
+- **优先级系统**：搜索结果按重要性加权，频繁访问自动提升优先级
+- **标签系统**：支持自定义标签搜索和管理
+- **多Agent支持**：私有记忆 + 共享记忆
+
+### 层级架构
+
+| 层级 | 功能 | 说明 |
+|------|------|------|
+| L1 | 工具结果存储 | 大结果(10KB+)写磁盘，上下文只放2KB预览 |
+| L2 | 微压缩 | 基于时间/缓存清理，几乎零成本 |
+| L3 | 会话记忆 | 结构化笔记，零API成本 |
+| L5 | 记忆提取 | 跨会话持久知识 |
+| L6 | 做梦整合 | 定期记忆巩固 |
 
 ## 安装
 
@@ -22,10 +35,7 @@ OpenClaw 插件 - AI 渐进式记忆系统（无感运行版）
    ```
 3. 复制整个项目到 OpenClaw 扩展目录
    ```bash
-   # 根据你的系统调整路径
    cp -r . ~/.openclaw/extensions/ai-memory-claw
-   cd ~/.openclaw/extensions/ai-memory-claw
-   npm install  # 再次安装确保本地依赖完整
    ```
 4. 配置 OpenClaw：编辑 `~/.openclaw/openclaw.json`
    ```json
@@ -46,51 +56,36 @@ OpenClaw 插件 - AI 渐进式记忆系统（无感运行版）
    ```
 5. 启动 OpenClaw Gateway
 
-### 方式二：发布到 npm（供开发者使用）
+### 方式二：发布到 npm
 
-本插件已发布为 npm 包 `ai-memory-claw`。你可以：
 ```bash
 npm install ai-memory-claw
-```
-然后在 OpenClaw 配置中指定：
-```json
-{
-  "plugins": {
-    "entries": {
-      "ai-memory-claw": {
-        "package": "ai-memory-claw",
-        "enabled": true
-      }
-    }
-  }
-}
 ```
 
 ## 配置说明
 
-在 OpenClaw 配置中通过 `plugins.entries.ai-memory-claw.config` 设置。所有配置项：
+### 基础配置
 
 | 配置项 | 类型 | 默认值 | 说明 |
 |--------|------|--------|------|
 | `dataDir` | `string` | `~/.ai-memory-claw/data` | 记忆数据存储目录 |
 | `autoRecall` | `boolean` | `true` | 对话前自动搜索并注入相关记忆 |
 | `autoCapture` | `boolean` | `true` | 对话后自动生成记忆 |
-| `captureStrategy` | `"always" \| "selective"` | `"always"` | 捕获策略：always=全部存储，selective=仅关键词匹配 |
-| `autoRecallInNewSession` | `boolean` | `true` | 新会话首次对话时自动注入记忆 |
-| `newSessionMemoryLimit` | `number` (1-5) | `1` | 新会话时注入的记忆数量 |
-| `manualTriggerEnabled` | `boolean` | `true` | 用户消息包含关键词时触发手动召回 |
-| `manualTriggerKeywords` | `string[]` | 见下方 | 手动召回触发关键词列表 |
-| `manualRecallLimit` | `number` (1-10) | `3` | 手动触发时注入的记忆数量上限 |
-| `recallThreshold` | `number` (0-1) | `0.6` | 相似度阈值，越高越严格 |
-| `recallLimit` | `number` (1-10) | `2` | 每次召回的记忆数量上限 |
-| `captureMaxChars` | `number` (100-2000) | `500` | 自动捕获的最大字符数 |
-| `enableSummary` | `boolean` | `true` | 启用记忆摘要功能 |
-| `enableForget` | `boolean` | `true` | 启用遗忘机制（定期清理低价值记忆） |
-| `enableIntegration` | `boolean` | `true` | 启用整合机制（合并相似记忆） |
-| `forgetIntervalDays` | `number` (1-30) | `7` | 遗忘检查间隔（天） |
-| `integrationThreshold` | `number` (0.5-1) | `0.8` | 记忆整合相似度阈值 |
+| `captureStrategy` | `"always" \| "selective"` | `"always"` | 捕获策略 |
 
-### 默认触发关键词
+### 高级配置
+
+| 配置项 | 类型 | 默认值 | 说明 |
+|--------|------|--------|------|
+| `sessionMemory.enabled` | `boolean` | `true` | 会话记忆开关 |
+| `sessionMemory.storageDir` | `string` | `~/.ai-memory-claw/session-memory` | 会话记忆存储目录 |
+| `toolResultStorage.enabled` | `boolean` | `true` | 工具结果存储开关 |
+| `toolResultStorage.grepThreshold` | `number` | `10240` | grep 阈值(字节) |
+| `toolResultStorage.previewLength` | `number` | `2048` | 预览长度(字节) |
+| `microCompaction.enabled` | `boolean` | `true` | 微压缩开关 |
+| `dreamConsolidation.enabled` | `boolean` | `true` | 做梦整合开关 |
+
+### 触发关键词
 
 ```json
 [
@@ -100,56 +95,34 @@ npm install ai-memory-claw
 ]
 ```
 
-## 记忆目录结构
+## 数据目录结构
 
 ```
-~/.ai-memory-claw/data/
-├── 日常事务/
-│   └── 通用/
-│       └── 日常-通用-20260328-2315-xxxxx.json
-├── 系统运维/
-│   └── 通用/
-│       └── 系统-通用-20260328-xxxxxx.json
-└── ...
-```
-
-## 数据格式
-
-每条记忆为 JSON 文件：
-
-```json
-{
-  "id": "日常-通用-20260328-2315-xxxxx",
-  "category": "日常事务",
-  "subCategory": "通用",
-  "content": {
-    "task": "用户询问的问题",
-    "process": "处理过程",
-    "result": "处理结果"
-  },
-  "embedding": [0.1, 0.2, ...],
-  "importance": "critical",
-  "usageCount": 10
-}
+~/.ai-memory-claw/
+├── agents/                     # 私有记忆
+│   └── <agent>/
+│       └── <category>/
+├── shared/                     # 共享记忆 (多Agent)
+├── tool-results/              # L1: 工具结果存储
+│   └── <sessionId>/
+├── session-memory/            # L3: 会话记忆
+│   └── <sessionId>.md.json
+└── memory/                    # L5: 跨会话知识
+    ├── tasks/
+    ├── errors/
+    ├── preferences/
+    └── knowledge/
 ```
 
 ## 开发
 
 ### 构建
 
-TypeScript 源码需编译为 JavaScript：
-
 ```bash
 npm run build
-# 或监听模式
-npm run dev
 ```
 
-输出位于 `dist/` 目录。
-
 ### 测试
-
-本插件使用 Vitest 进行测试：
 
 ```bash
 npm test
@@ -160,40 +133,56 @@ npm test
 ```
 ai-memory-claw/
 ├── src/
-│   ├── auto-capture.ts      # 自动捕获逻辑
-│   ├── auto-recall.ts       # 自动召回逻辑
-│   ├── category.ts          # 记忆分类分析
-│   ├── config.ts            # 配置管理
-│   ├── embedding.ts         # 向量化处理
-│   ├── forgetter.ts         # 遗忘机制
-│   ├── integrator.ts        # 整合机制
-│   ├── memory-system.ts     # 核心记忆系统
-│   ├── triggers.ts          # 触发器匹配
-│   ├── types.ts             # 类型定义
-│   └── test.ts              # 测试文件
-├── index.ts                 # 插件入口
-├── openclaw.plugin.json     # OpenClaw 插件元数据
-├── tsconfig.json            # TypeScript 配置
-├── package.json             # 项目依赖
-└── README.md                # 本文档
+│   ├── auto-capture.ts         # 自动捕获
+│   ├── auto-recall.ts          # 自动召回
+│   ├── category.ts             # 记忆分类
+│   ├── config.ts               # 配置管理
+│   ├── dream-consolidation.ts  # L6: 做梦整合
+│   ├── embedding.ts             # 向量化处理
+│   ├── forgetter.ts             # 遗忘机制
+│   ├── integrator.ts            # 整合机制
+│   ├── memory-system.ts         # 核心记忆系统
+│   ├── memory-tags.ts           # 标签系统
+│   ├── micro-compaction.ts      # L2: 微压缩
+│   ├── session-memory.ts        # L3: 会话记忆
+│   ├── tool-result-store.ts     # L1: 工具结果存储
+│   ├── triggers.ts              # 触发分析
+│   └── types.ts                 # 类型定义
+├── tests/                      # 测试文件
+│   ├── session-memory.test.ts
+│   ├── tool-result-store.test.ts
+│   ├── micro-compaction.test.ts
+│   ├── auto-capture.test.ts
+│   └── auto-recall.test.ts
+├── docs/
+│   └── UPGRADE_V2.md           # 升级方案
+├── index.ts                    # 插件入口
+├── package.json
+└── README.md
 ```
 
-## 技术说明
+## 核心特性说明
 
-- 记忆数据按 `category/subCategory/` 分类存储 JSON 文件
-- 使用简化的本地向量搜索（基于 `chroma-js` 的色彩空间算法，实验性质）
-- 分类基于关键词匹配 + LLM 分析（可选）
-- 支持自动摘要、合并重复记忆、定期遗忘
+### 优先级系统
+- 搜索结果按重要性加权（权重30%）
+- 频繁访问的记忆自动提升优先级
+- 低优先级记忆更容易被遗忘机制清理
+
+### 标签系统
+- 支持自定义标签
+- 自动提取标签（基于关键词匹配）
+- 按标签搜索记忆
+
+### 会话记忆
+- 每个会话维护结构化笔记
+- 跟踪决策、步骤、待办
+- 零API成本的上下文摘要
+
+### 做梦整合
+- 积累10个会话后触发
+- 4阶段整合流程
+- 矛盾记忆检测
 
 ## 许可证
 
 Apache License 2.0 - 详见 [LICENSE](LICENSE) 文件。
-
----
-
-## 贡献
-
-欢迎提交 Issue 和 Pull Request。请确保：
-- 代码通过 `npm run build` 编译
-- 测试通过 `npm test`
-- 遵循项目的代码风格

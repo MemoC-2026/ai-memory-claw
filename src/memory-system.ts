@@ -81,6 +81,19 @@ export class MemorySystem {
   }
   
   /**
+   * 获取重要性分数（用于搜索加权）
+   */
+  private getImportanceScore(importance: string): number {
+    switch (importance) {
+      case 'critical': return 1.0;
+      case 'high': return 0.7;
+      case 'medium': return 0.5;
+      case 'low': return 0.2;
+      default: return 0.5;
+    }
+  }
+
+  /**
    * 搜索记忆（包含私有+共享）
    */
   async search(query: string, options: SearchOptions): Promise<Memory[]> {
@@ -103,9 +116,18 @@ export class MemorySystem {
         results.push({ memory, score });
       }
     }
-    
-    // 3. 排序
-    results.sort((a, b) => b.score - a.score);
+
+    // 3. 按综合分数排序（相似度 + 重要性加权）
+    const importanceWeight = 0.3; // 重要性权重
+    results.sort((a, b) => {
+      const aImportanceScore = this.getImportanceScore(a.memory.importance);
+      const bImportanceScore = this.getImportanceScore(b.memory.importance);
+      
+      const aCompositeScore = a.score * (1 - importanceWeight) + aImportanceScore * importanceWeight;
+      const bCompositeScore = b.score * (1 - importanceWeight) + bImportanceScore * importanceWeight;
+      
+      return bCompositeScore - aCompositeScore;
+    });
     
     // 4. 强化前N个记忆
     for (const result of results.slice(0, options.limit)) {
@@ -125,6 +147,7 @@ export class MemorySystem {
   async searchPrivate(query: string, options: SearchOptions): Promise<Memory[]> {
     const queryVector = await this.embeddingGenerator.embed(query);
     const results: SearchResult[] = [];
+    const importanceWeight = 0.3;
     
     for (const memory of this.memories.values()) {
       if (memory.embedding.length === 0) continue;
@@ -138,8 +161,17 @@ export class MemorySystem {
         results.push({ memory, score });
       }
     }
-    
-    results.sort((a, b) => b.score - a.score);
+
+    // 按综合分数排序（相似度 + 重要性加权）
+    results.sort((a, b) => {
+      const aImportanceScore = this.getImportanceScore(a.memory.importance);
+      const bImportanceScore = this.getImportanceScore(b.memory.importance);
+      
+      const aCompositeScore = a.score * (1 - importanceWeight) + aImportanceScore * importanceWeight;
+      const bCompositeScore = b.score * (1 - importanceWeight) + bImportanceScore * importanceWeight;
+      
+      return bCompositeScore - aCompositeScore;
+    });
     
     // 强化
     for (const result of results.slice(0, options.limit)) {
@@ -148,7 +180,7 @@ export class MemorySystem {
     
     return results.slice(0, options.limit).map(r => r.memory);
   }
-  
+
   /**
    * 搜索共享记忆
    */
@@ -157,6 +189,7 @@ export class MemorySystem {
     
     const queryVector = await this.embeddingGenerator.embed(query);
     const results: SearchResult[] = [];
+    const importanceWeight = 0.3;
     
     for (const memory of this.sharedMemories.values()) {
       if (memory.embedding.length === 0) continue;
@@ -170,8 +203,18 @@ export class MemorySystem {
         results.push({ memory, score });
       }
     }
+
+    // 按综合分数排序
+    results.sort((a, b) => {
+      const aImportanceScore = this.getImportanceScore(a.memory.importance);
+      const bImportanceScore = this.getImportanceScore(b.memory.importance);
+      
+      const aCompositeScore = a.score * (1 - importanceWeight) + aImportanceScore * importanceWeight;
+      const bCompositeScore = b.score * (1 - importanceWeight) + bImportanceScore * importanceWeight;
+      
+      return bCompositeScore - aCompositeScore;
+    });
     
-    results.sort((a, b) => b.score - a.score);
     return results.slice(0, options.limit).map(r => r.memory);
   }
   

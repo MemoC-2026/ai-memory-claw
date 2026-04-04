@@ -39,6 +39,45 @@ export type MemoryConfig = {
   sharedEnabled: boolean;
   sharedDir: string;
   fallbackToDefault: boolean;
+  
+  // === L3: 会话记忆 ===
+  sessionMemory: {
+    enabled: boolean;
+    storageDir: string;
+    compactionThreshold: number;
+  };
+  
+  // === L1: 工具结果存储 ===
+  toolResultStorage: {
+    enabled: boolean;
+    storageDir: string;
+    grepThreshold: number;
+    readThreshold: number;
+    previewLength: number;
+  };
+  
+  // === L2: 微压缩 ===
+  microCompaction: {
+    enabled: boolean;
+    timeThresholdMinutes: number;
+    keepRecentCount: number;
+    enableCacheEdits: boolean;
+    cacheMaxSize: number;
+  };
+  
+  // === L4: 全压缩 ===
+  fullCompaction: {
+    enabled: boolean;
+    threshold: number;
+    summaryModel: string;
+  };
+  
+  // === L6: 做梦整合 ===
+  dreamConsolidation: {
+    enabled: boolean;
+    minSessionsBeforeDream: number;
+    dreamIntervalHours: number;
+  };
 };
 
 export const defaultMemoryConfig: MemoryConfig = {
@@ -63,7 +102,46 @@ export const defaultMemoryConfig: MemoryConfig = {
   agentName: "default",
   sharedEnabled: true,
   sharedDir: "~/.ai-memory-claw/shared",
-  fallbackToDefault: true
+  fallbackToDefault: true,
+  
+  // === L3: 会话记忆 ===
+  sessionMemory: {
+    enabled: true,
+    storageDir: "~/.ai-memory-claw/session-memory",
+    compactionThreshold: 0.8
+  },
+  
+  // === L1: 工具结果存储 ===
+  toolResultStorage: {
+    enabled: true,
+    storageDir: "~/.ai-memory-claw/tool-results",
+    grepThreshold: 10 * 1024,   // 10KB
+    readThreshold: 20 * 1024,  // 20KB
+    previewLength: 2 * 1024     // 2KB
+  },
+  
+  // === L2: 微压缩 ===
+  microCompaction: {
+    enabled: true,
+    timeThresholdMinutes: 60,
+    keepRecentCount: 3,
+    enableCacheEdits: true,
+    cacheMaxSize: 50 * 1024
+  },
+  
+  // === L4: 全压缩 ===
+  fullCompaction: {
+    enabled: true,
+    threshold: -13000,
+    summaryModel: "haiku"
+  },
+  
+  // === L6: 做梦整合 ===
+  dreamConsolidation: {
+    enabled: true,
+    minSessionsBeforeDream: 10,
+    dreamIntervalHours: 24
+  }
 };
 
 /**
@@ -111,6 +189,21 @@ export function mergeWithDefaults(pluginConfig: Partial<MemoryConfig>): MemoryCo
     agentName: pluginConfig.agentName || defaultMemoryConfig.agentName,
     sharedEnabled: pluginConfig.sharedEnabled ?? defaultMemoryConfig.sharedEnabled,
     sharedDir: pluginConfig.sharedDir || defaultMemoryConfig.sharedDir,
-    fallbackToDefault: pluginConfig.fallbackToDefault ?? defaultMemoryConfig.fallbackToDefault
+    fallbackToDefault: pluginConfig.fallbackToDefault ?? defaultMemoryConfig.fallbackToDefault,
+    
+    // === L3: 会话记忆 ===
+    sessionMemory: pluginConfig.sessionMemory || defaultMemoryConfig.sessionMemory,
+    
+    // === L1: 工具结果存储 ===
+    toolResultStorage: pluginConfig.toolResultStorage || defaultMemoryConfig.toolResultStorage,
+    
+    // === L2: 微压缩 ===
+    microCompaction: pluginConfig.microCompaction || defaultMemoryConfig.microCompaction,
+    
+    // === L4: 全压缩 ===
+    fullCompaction: pluginConfig.fullCompaction || defaultMemoryConfig.fullCompaction,
+    
+    // === L6: 做梦整合 ===
+    dreamConsolidation: pluginConfig.dreamConsolidation || defaultMemoryConfig.dreamConsolidation
   };
 }

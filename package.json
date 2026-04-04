@@ -1,7 +1,7 @@
 {
   "name": "ai-memory-claw",
-  "version": "1.0.1",
-  "description": "AI渐进式记忆系统 OpenClaw 插件 - 无感运行版",
+  "version": "2.1.0",
+  "description": "AI渐进式记忆系统 OpenClaw 插件 - 支持记忆标签与优先级",
   "main": "index.ts",
   "type": "module",
   "scripts": {
@@ -22,8 +22,8 @@
     "uuid": "^9.0.0"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0",
-    "@types/uuid": "^9.0.0",
+    "@types/node": "^20.19.39",
+    "@types/uuid": "^9.0.8",
     "typescript": "^5.0.0",
     "vitest": "^1.0.0"
   }
